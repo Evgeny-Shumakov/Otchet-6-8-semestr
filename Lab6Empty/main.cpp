@@ -71,6 +71,51 @@ int __low_level_init(void)
   return 1;
 }
 }
+//---------------Addresses------------------------------------------------------
+// Temperature sensor calibration values
+
+constexpr size_t tempAddr = 0x1FFF7A2C; //  of 30 °C
+constexpr size_t temp2Addr =  0x1FFF7A2E; //   temperature of 110 °C
+// Internal reference voltage calibration values
+constexpr size_t VoltAddr =  0x1FFF7A2A; //Raw data acquired at temperature of 30 °C
+
+//---------------Calibration values---------------------------------------------
+// Temperature sensor calibration values
+volatile uint16_t *tempPointer = reinterpret_cast<volatile uint16_t*>(tempAddr) ;
+volatile uint16_t *temp2Pointer = reinterpret_cast<volatile uint16_t*>(temp2Addr) ;
+uint16_t temp32 = (*tsCal1Pointer);
+uint16_t temp232 = (*tsCal2Pointer);
+float temp = temp32;
+float temp2 = temp232;
+
+// Internal reference voltage calibration values
+volatile uint16_t *VoltPointer = reinterpret_cast<volatile uint16_t*>(VoltAddr) ;
+uint16_t VddaCal32 = (*VddaCalPointer);
+float VddaCal = VddaCal32;
+
+/*----------------Temperature coeficients---------------------------------------
+Temperature sensor calibration:-------------------------------------------------
+temperature = (110-30) * (Adc_code - tsCal1) / (tsCal2- tsCal2) + 30 ;
+kx+b:
+temperature = ADC_Code * (110-30)/(tsCal2- tsCal2) + (30 - (110-30)*tsCal1/(tsCal2- tsCal2) )
+k = (110-30)/(tsCal2- tsCal2)
+b = 30 - (110-30)*tsCal1/(tsCal2- tsCal2)
+
+Internal reference voltage calibration:-----------------------------------------
+temperature = (110-30) * ((ADC_Code * vddaCal)/vdda -  tsCal1) / (tsCal2 - tsCal1) + DEGREE_30;
+kx+b:
+temperature = ADC_Code * (110-30)*VddaCal/(Vdda*(tsCal2-tsCal1)) + DEGREE_30 - (110-30)*tsCal1/(tsCal2-tsCal1)
+k = (110-30)*VddaCal/(Vdda*(tsCal2-tsCal1))
+b = DEGREE_30 - (110-30)*tsCal1/(tsCal2-tsCal1)
+*/
+
+/*---------------Temperature coeficients without calibration--------------------
+0.0025 - Average slope
+0.76 - Voltage at 25
+3.3 - Reference voltage
+1024 - 2^10 (for 10bits)
+*/
+
 
 constexpr float B1 = 0;                           //(25.0F - 0.76F/0.0025F); // see datacheet (page 226) and calculate B coeficient here ;
 constexpr float K1 = 3.3F/1024;                           //(3.308F/1024.0F)/0.0025F ; // see datcheet ((page 226)) and calculate K coeficient here ; 
